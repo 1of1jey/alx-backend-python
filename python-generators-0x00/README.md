@@ -11,7 +11,7 @@ This project demonstrates database setup and population using Python with MySQL,
 python-generators-0x00/
 ├── seed.py              # Database setup and seeding script
 ├── user_data.csv        # Sample user data
-├── 0-main.py           # Test script
+├── main.py           # Test script
 └── README.md           # This file
 ```
 
