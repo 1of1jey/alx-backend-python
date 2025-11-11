@@ -144,4 +144,5 @@ class ConversationListSerializer(serializers.ModelSerializer):
         return None
 
     def get_message_count(self, obj):
-        return obj.messages.count()
+        # Use annotated value if present, fallback to 0
+        return getattr(obj, 'message_count', 0)
