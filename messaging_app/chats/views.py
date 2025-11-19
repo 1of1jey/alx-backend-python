@@ -8,11 +8,25 @@ from rest_framework import serializers
 from django.shortcuts import get_object_or_404
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
+from .permissions import (
+    IsConversationParticipant,
+    IsMessageSenderOrConversationParticipant,
+    CanCreateConversation,
+    CanSendMessage
+)
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
     serializer_class = ConversationSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanCreateConversation]
+    
+    def get_permissions(self):
+        if self.action in ['retrieve', 'update', 'partial_update', 'destroy', 'messages', 'add_participant']:
+            permission_classes = [IsAuthenticated, IsConversationParticipant]
+        else:
+            permission_classes = [IsAuthenticated, CanCreateConversation]
+        
+        return [permission() for permission in permission_classes]
     
     def get_queryset(self):
         return Conversation.objects.filter(
@@ -21,7 +35,6 @@ class ConversationViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         conversation = serializer.save()
-        # Add the creator as a participant
         conversation.participants.add(self.request.user)
     
     @action(detail=True, methods=['get'])
@@ -60,7 +73,15 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
 class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanSendMessage]
+    
+    def get_permissions(self):
+        if self.action in ['retrieve', 'update', 'partial_update', 'destroy', 'mark_as_read']:
+            permission_classes = [IsAuthenticated, IsMessageSenderOrConversationParticipant]
+        else:
+            permission_classes = [IsAuthenticated, CanSendMessage]
+        
+        return [permission() for permission in permission_classes]
     
     def get_queryset(self):
         queryset = Message.objects.all()
@@ -99,8 +120,6 @@ class MessageViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def unread(self, request):
-        # Assuming you have an 'is_read' field or similar
-        # This is a placeholder - adjust based on your Message model
         unread_messages = self.get_queryset().filter(
             is_read=False
         ).exclude(sender=request.user)
