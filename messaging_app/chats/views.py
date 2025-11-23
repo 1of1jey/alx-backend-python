@@ -9,8 +9,7 @@ from django.shortcuts import get_object_or_404
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 from .permissions import (
-    IsConversationParticipant,
-    IsMessageSenderOrConversationParticipant,
+    IsParticipantOfConversation,
     CanCreateConversation,
     CanSendMessage
 )
@@ -22,7 +21,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
     
     def get_permissions(self):
         if self.action in ['retrieve', 'update', 'partial_update', 'destroy', 'messages', 'add_participant']:
-            permission_classes = [IsAuthenticated, IsConversationParticipant]
+            permission_classes = [IsAuthenticated, IsParticipantOfConversation]
         else:
             permission_classes = [IsAuthenticated, CanCreateConversation]
         
@@ -77,7 +76,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     
     def get_permissions(self):
         if self.action in ['retrieve', 'update', 'partial_update', 'destroy', 'mark_as_read']:
-            permission_classes = [IsAuthenticated, IsMessageSenderOrConversationParticipant]
+            permission_classes = [IsAuthenticated, IsParticipantOfConversation]
         else:
             permission_classes = [IsAuthenticated, CanSendMessage]
         
