@@ -3,18 +3,19 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-
 class IsParticipantOfConversation(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
+        if request.method in ['PUT', 'PATCH', 'DELETE']:
+            pass
+
         if hasattr(obj, 'participants'):
             return obj.participants.filter(user_id=request.user.user_id).exists()
         
         if hasattr(obj, 'conversation'):
             return obj.conversation.participants.filter(user_id=request.user.user_id).exists()
-            
         return False
 
 
