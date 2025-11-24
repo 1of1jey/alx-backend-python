@@ -70,9 +70,16 @@ class ConversationViewSet(viewsets.ModelViewSet):
             )
 
 
+from django_filters.rest_framework import DjangoFilterBackend
+from .pagination import MessagePagination
+from .filters import MessageFilter
+
 class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated, CanSendMessage]
+    pagination_class = MessagePagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = MessageFilter
     
     def get_permissions(self):
         if self.action in ['retrieve', 'update', 'partial_update', 'destroy', 'mark_as_read']:
@@ -123,6 +130,11 @@ class MessageViewSet(viewsets.ModelViewSet):
             is_read=False
         ).exclude(sender=request.user)
         
+        page = self.paginate_queryset(unread_messages)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
         serializer = self.get_serializer(unread_messages, many=True)
         return Response(serializer.data)
     
